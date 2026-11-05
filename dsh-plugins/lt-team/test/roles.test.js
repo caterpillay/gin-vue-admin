@@ -91,18 +91,24 @@ test('role manager reuses deterministic sessions and deduplicates requests', asy
   assert.equal(first.cached, false)
   assert.equal(second.cached, true)
   assert.equal(first.text, 'answer-lt-team-qa')
+  const rank = await manager.ask('rank-programmer', 'ticket-1:rank-design', 'Review the supplied rank design context.')
+  assert.equal(rank.text, 'answer-lt-team-rank-programmer')
   await assert.rejects(manager.ask('qa', 'bad]\nmarker', 'Unsafe request id.'), /must match/)
   assert.equal(agents.get('lt-team-qa').test.events.filter(event => event.type === 'user/message').length, 1)
   assert.ok(agents.get('lt-team-qa').test.skills.has('lt-team-qa-memory-manager'))
-  assert.deepEqual(context.test.renamed.map(item => item.sessionId).sort(), ['lt-team-product-manager', 'lt-team-qa'])
+  assert.deepEqual(context.test.renamed.map(item => item.sessionId).sort(), [
+    'lt-team-api-programmer', 'lt-team-product-manager', 'lt-team-qa', 'lt-team-rank-programmer',
+  ])
   await manager.dispose()
   assert.equal(agents.size, 0)
-  assert.deepEqual([...context.test.stored].sort(), ['lt-team-product-manager', 'lt-team-qa'])
-  assert.deepEqual(context.test.counts, { created: 2, resumed: 0 })
+  assert.deepEqual([...context.test.stored].sort(), [
+    'lt-team-api-programmer', 'lt-team-product-manager', 'lt-team-qa', 'lt-team-rank-programmer',
+  ])
+  assert.deepEqual(context.test.counts, { created: 4, resumed: 0 })
 
   const restarted = new RoleManager(context, config)
   await restarted.start()
-  assert.equal(agents.size, 2)
-  assert.deepEqual(context.test.counts, { created: 2, resumed: 2 })
+  assert.equal(agents.size, 4)
+  assert.deepEqual(context.test.counts, { created: 4, resumed: 4 })
   await restarted.dispose()
 })

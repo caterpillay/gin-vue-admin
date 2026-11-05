@@ -2,7 +2,7 @@
   "name": "@local/lt-team",
   "version": "0.1.0",
   "private": true,
-  "description": "Persistent product-manager and QA role sessions for dsh-superagent workers",
+  "description": "Persistent product-manager, QA, and rank/api programmer sessions for dsh-superagent workers",
   "type": "module",
   "main": "index.js",
   "exports": {

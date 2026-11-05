@@ -14,12 +14,32 @@ export const DEFAULT_ROLES = Object.freeze([
     kind: 'qa',
     name: 'QA',
     responsibility: '负责 rank、api 相关测试策略、回归范围、发布风险和验收验证。',
+    repository: '',
+    writeRoot: '',
+    readRoots: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: 'rank-programmer',
+    kind: 'programmer',
+    name: 'rank 程序员',
+    responsibility: '负责 rank 仓库的实现方案、代码变更建议和技术问题处理。',
+    repository: 'rank',
+    writeRoot: '',
+    readRoots: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: 'api-programmer',
+    kind: 'programmer',
+    name: 'api 程序员',
+    responsibility: '负责 api 仓库的实现方案、代码变更建议和技术问题处理。',
+    repository: 'api',
+    writeRoot: '',
     readRoots: Object.freeze([]),
   }),
 ])
 
 const ROLE_ID = /^[a-z][a-z0-9-]{1,31}$/
-const ROLE_KINDS = new Set(['product-manager', 'qa'])
+const ROLE_KINDS = new Set(['product-manager', 'qa', 'programmer'])
 
 export function defaultStateDir(env = process.env) {
   const home = env.DSH_HOME?.trim() || join(homedir(), '.dsh')
@@ -42,7 +62,11 @@ function normalizeRole(input, stateDir) {
   const id = requiredText(input.id, 'role id')
   if (!ROLE_ID.test(id)) throw new Error(`lt-team role id ${id} must match ${ROLE_ID}`)
   const kind = requiredText(input.kind, `role ${id} kind`)
-  if (!ROLE_KINDS.has(kind)) throw new Error(`lt-team role ${id} kind must be product-manager or qa`)
+  if (!ROLE_KINDS.has(kind)) throw new Error(`lt-team role ${id} kind must be product-manager, qa, or programmer`)
+  const repository = String(input.repository ?? '').trim()
+  if (kind === 'programmer' && !repository) throw new Error(`lt-team programmer role ${id} must name its repository`)
+  const writeRoot = String(input.writeRoot ?? '').trim()
+  if (writeRoot) throw new Error(`lt-team role ${id} writeRoot must stay empty until programmer repository isolation is enabled`)
   const roots = [...new Set((input.readRoots ?? []).map((item, index) => absolutePath(item, `role ${id} readRoots[${index}]`)))]
   const roleDir = join(stateDir, 'lt-team', 'roles', id)
   return {
@@ -50,6 +74,8 @@ function normalizeRole(input, stateDir) {
     kind,
     name: requiredText(input.name, `role ${id} name`),
     responsibility: requiredText(input.responsibility, `role ${id} responsibility`),
+    repository,
+    writeRoot,
     readRoots: roots,
     roleDir,
     workspace: join(roleDir, 'workspace'),

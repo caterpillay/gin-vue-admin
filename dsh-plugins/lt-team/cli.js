@@ -51,7 +51,10 @@ async function main(argv) {
   const command = argv.shift()
   if (command === 'roles' && argv.length === 0) {
     const roles = await call({ command: 'roles' })
-    for (const role of roles) stdout.write(`${role.id}\t${role.name}\t${role.responsibility}\n`)
+    for (const role of roles) {
+      const repository = role.repository ? `\t${role.repository}\t${role.pathsConfigured ? 'paths-configured' : 'paths-empty'}` : ''
+      stdout.write(`${role.id}\t${role.name}\t${role.responsibility}${repository}\n`)
+    }
     return
   }
   if (command !== 'ask') throw new Error(usage())

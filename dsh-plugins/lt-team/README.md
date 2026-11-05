@@ -1,11 +1,13 @@
 # lt-team
 
-`lt-team` adds two fixed, persistent specialist Sessions to a DeepSeek Harness `dsh-superagent` profile:
+`lt-team` adds four fixed, persistent specialist Sessions to a DeepSeek Harness `dsh-superagent` profile:
 
 - **Product manager** — requirements, scope, priority, acceptance criteria, and cross-business coordination.
 - **QA** — test strategy, regression coverage, release risk, and acceptance verification.
+- **rank programmer** — rank implementation design, code-change advice, and technical problem solving.
+- **api programmer** — api implementation design, code-change advice, and technical problem solving.
 
-Their Session IDs are deterministic (`lt-team-product-manager` and `lt-team-qa`), so their conversation context survives unrelated Superagent tickets and process restarts. A ticket worker consults them explicitly with the `lt-team` command and remains responsible for authorization, code changes, reports, and delivery.
+Their Session IDs are deterministic (`lt-team-product-manager`, `lt-team-qa`, `lt-team-rank-programmer`, and `lt-team-api-programmer`), so their conversation context survives unrelated Superagent tickets and process restarts. A ticket worker consults them explicitly with the `lt-team` command and remains responsible for authorization, code changes, reports, and delivery.
 
 ## Why this is a sidecar
 
@@ -47,11 +49,25 @@ The initial roles know the business repository names `rank` and `api`, but no fi
         readRoots:
           - /path/to/rank
           - /path/to/api
+      - id: rank-programmer
+        kind: programmer
+        name: rank 程序员
+        responsibility: 负责 rank 的实现方案和技术问题。
+        repository: rank
+        writeRoot: ''
+        readRoots: []
+      - id: api-programmer
+        kind: programmer
+        name: api 程序员
+        responsibility: 负责 api 的实现方案和技术问题。
+        repository: api
+        writeRoot: ''
+        readRoots: []
 ```
 
 PM and QA are read-only: their tool allowlist excludes shell and file-write tools, and file reads are guarded by `readRoots`. Their private Session workspace remains writable only for Harness internals.
 
-Programmer roles are intentionally not enabled in this first version. “Write exactly one repository, read a broader set” must be enforced by a real sandbox/mount/ACL boundary, not only by a prompt or command parser. Add them only after the writable worktree and read-only repository mounts are available and tested.
+The rank and api programmer roles are enabled now, but both `writeRoot` values intentionally stay empty. They can accumulate engineering context and advise from material supplied by the current Ticket worker, but they cannot inspect, modify, build, or commit either repository. Enabling actual repository work remains a later step: “write exactly one repository, read a broader set” must be enforced by a real sandbox/mount/ACL boundary, not only by a prompt or command parser.
 
 ## Worker use
 

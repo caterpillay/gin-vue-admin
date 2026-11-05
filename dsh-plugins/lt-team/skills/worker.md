@@ -1,11 +1,15 @@
 # lt-team worker guide
 
-Use `lt-team` when a ticket benefits from durable product or quality context. The specialist Sessions persist across tickets; the current dsh-superagent worker remains responsible for authorization, implementation, reports, and delivery.
+Use `lt-team` when a ticket benefits from durable product, quality, or repository-specific engineering context. The specialist Sessions persist across tickets; the current dsh-superagent worker remains responsible for authorization, implementation, reports, and delivery.
 
 ## Roles
 
 - `product-manager`: requirements, scope, priority, acceptance criteria, and cross-repository product decisions.
 - `qa`: test strategy, regression coverage, release risk, and acceptance verification.
+- `rank-programmer`: rank implementation design and technical problem solving.
+- `api-programmer`: api implementation design and technical problem solving.
+
+The programmer repository paths are intentionally empty. Give them the exact code/context they need in the request; they must not claim to have read or changed a repository.
 
 ## Commands
 

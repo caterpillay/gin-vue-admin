@@ -6,9 +6,11 @@ import { startRpcServer } from './lib/rpc.js'
 
 const RoleConfig = s.object({
   id: s.string().description('Stable lowercase role id.'),
-  kind: s.string().description('product-manager or qa.'),
+  kind: s.string().description('product-manager, qa, or programmer.'),
   name: s.string().description('Display name.'),
   responsibility: s.string().description('The business responsibility this permanent role owns.'),
+  repository: s.string().default('').description('Repository label owned by a programmer role, such as rank or api.'),
+  writeRoot: s.string().default('').description('Reserved absolute writable repository path; keep empty until isolation is enabled.'),
   readRoots: s.array(s.string()).default([]).description('Absolute repository roots this read-only role may inspect.'),
 })
 
