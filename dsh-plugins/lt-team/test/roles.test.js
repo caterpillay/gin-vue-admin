@@ -61,6 +61,10 @@ test('decorates only core-managed fixed role Sessions with memory and zero-path 
   for (const [agent, role] of [[qa, 'qa'], [rank, 'rank-programmer']]) {
     assert.equal(agent.test.sections.length, 1)
     assert.match(agent.test.sections[0].text, new RegExp(`permanent lt-team role .*${role}`))
+    if (role === 'rank-programmer') {
+      assert.match(agent.test.sections[0].text, /Assigned repository: rank\. Repository provider: ByteDance Codebase\./)
+      assert.match(agent.test.sections[0].text, /routing metadata only/)
+    }
     assert.ok(agent.test.skills.has(`lt-team-${role}-memory-manager`))
     assert.ok(agent.test.tools.has('lt_team_memory_add'))
     const allowed = agent.test.restrictions.at(-1)

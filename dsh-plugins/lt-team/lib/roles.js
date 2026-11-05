@@ -6,8 +6,9 @@ const RESEARCH_TOOLS = ['web_search', 'web_fetch', 'skill', 'todo_write']
 const READ_TOOLS = ['read', 'read_image', 'glob', 'grep']
 
 function promptFor(role) {
+  const provider = role.repositoryProvider === 'codebase' ? 'ByteDance Codebase' : role.repositoryProvider === 'github' ? 'GitHub' : ''
   const ownership = role.kind === 'programmer'
-    ? `\n\nAssigned repository: ${role.repository}. Its path is intentionally unset, so reason only from the current Ticket context and do not claim repository access.`
+    ? `\n\nAssigned repository: ${role.repository}. Repository provider: ${provider}. This is routing metadata only; its path is intentionally unset, so reason only from the current Ticket context and do not claim repository or provider access.`
     : ''
   const repositories = role.readRoots.length
     ? `Configured absolute read-only repository roots:\n${role.readRoots.map(root => `- ${root}`).join('\n')}`

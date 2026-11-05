@@ -7,6 +7,9 @@ export const DEFAULT_ROLES = Object.freeze([
     kind: 'product-manager',
     name: '产品经理',
     responsibility: '负责 rank、api 相关需求澄清、范围与优先级、验收标准和跨业务协调。',
+    repository: '',
+    repositoryProvider: '',
+    writeRoot: '',
     readRoots: Object.freeze([]),
   }),
   Object.freeze({
@@ -15,6 +18,7 @@ export const DEFAULT_ROLES = Object.freeze([
     name: 'QA',
     responsibility: '负责 rank、api 相关测试策略、回归范围、发布风险和验收验证。',
     repository: '',
+    repositoryProvider: '',
     writeRoot: '',
     readRoots: Object.freeze([]),
   }),
@@ -24,6 +28,7 @@ export const DEFAULT_ROLES = Object.freeze([
     name: 'rank 程序员',
     responsibility: '负责 rank 仓库的实现方案、代码变更建议和技术问题处理。',
     repository: 'rank',
+    repositoryProvider: 'codebase',
     writeRoot: '',
     readRoots: Object.freeze([]),
   }),
@@ -33,6 +38,7 @@ export const DEFAULT_ROLES = Object.freeze([
     name: 'api 程序员',
     responsibility: '负责 api 仓库的实现方案、代码变更建议和技术问题处理。',
     repository: 'api',
+    repositoryProvider: 'codebase',
     writeRoot: '',
     readRoots: Object.freeze([]),
   }),
@@ -40,7 +46,9 @@ export const DEFAULT_ROLES = Object.freeze([
 
 const ROLE_ID = /^[a-z][a-z0-9-]{1,31}$/
 const ROLE_KINDS = new Set(['product-manager', 'qa', 'programmer'])
+const REPOSITORY_PROVIDERS = new Set(['codebase', 'github'])
 const CORE_ROLES = new Map(DEFAULT_ROLES.map(role => [role.id, { kind: role.kind, repository: String(role.repository ?? '') }]))
+const DEFAULT_PROVIDERS = new Map(DEFAULT_ROLES.map(role => [role.id, String(role.repositoryProvider ?? '')]))
 
 export function defaultStateDir(env = process.env) {
   const home = env.DSH_HOME?.trim() || join(homedir(), '.dsh')
@@ -66,6 +74,14 @@ function normalizeRole(input, stateDir) {
   if (!ROLE_KINDS.has(kind)) throw new Error(`lt-team role ${id} kind must be product-manager, qa, or programmer`)
   const repository = String(input.repository ?? '').trim()
   if (kind === 'programmer' && !repository) throw new Error(`lt-team programmer role ${id} must name its repository`)
+  const configuredProvider = String(input.repositoryProvider ?? '').trim().toLowerCase()
+  const repositoryProvider = configuredProvider || (kind === 'programmer' ? DEFAULT_PROVIDERS.get(id) ?? '' : '')
+  if (kind === 'programmer' && !REPOSITORY_PROVIDERS.has(repositoryProvider)) {
+    throw new Error(`lt-team programmer role ${id} repositoryProvider must be codebase or github`)
+  }
+  if (kind !== 'programmer' && repositoryProvider) {
+    throw new Error(`lt-team non-programmer role ${id} repositoryProvider must be empty`)
+  }
   const writeRoot = String(input.writeRoot ?? '').trim()
   if (writeRoot) throw new Error(`lt-team role ${id} writeRoot must stay empty until programmer repository isolation is enabled`)
   const roots = [...new Set((input.readRoots ?? []).map((item, index) => absolutePath(item, `role ${id} readRoots[${index}]`)))]
@@ -76,6 +92,7 @@ function normalizeRole(input, stateDir) {
     name: requiredText(input.name, `role ${id} name`),
     responsibility: requiredText(input.responsibility, `role ${id} responsibility`),
     repository,
+    repositoryProvider,
     writeRoot,
     readRoots: roots,
     roleDir,
