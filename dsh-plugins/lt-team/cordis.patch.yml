@@ -1,0 +1,4 @@
+- insert:
+    - id: lt-team
+      name: '@local/lt-team'
+      config: {}
