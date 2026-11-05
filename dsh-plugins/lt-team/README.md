@@ -1,23 +1,28 @@
 # lt-team
 
-`lt-team` adds four fixed, persistent specialist Sessions to a DeepSeek Harness `dsh-superagent` profile:
+`lt-team` is the memory and repository-policy companion for the fixed worker roles built into the matching `dsh-superagent` core change:
 
-- **Product manager** — requirements, scope, priority, acceptance criteria, and cross-business coordination.
-- **QA** — test strategy, regression coverage, release risk, and acceptance verification.
-- **rank programmer** — rank implementation design, code-change advice, and technical problem solving.
-- **api programmer** — api implementation design, code-change advice, and technical problem solving.
+- `product-manager`
+- `qa`
+- `rank-programmer`
+- `api-programmer`
 
-Their Session IDs are deterministic (`lt-team-product-manager`, `lt-team-qa`, `lt-team-rank-programmer`, and `lt-team-api-programmer`), so their conversation context survives unrelated Superagent tickets and process restarts. A ticket worker consults them explicitly with the `lt-team` command and remains responsible for authorization, code changes, reports, and delivery.
+The core keeps every request as an independent Ticket and makes the main Session choose one `role_id` when accepting it. Tickets assigned to the same role serialize through one persistent Session (`worker-<role id>`); different roles can work concurrently. Ticket Mandates, replies, directories, branches, PR state, cancellation and retries remain independent.
 
-## Why this is a sidecar
+This bundle does **not** create another team, route through a CLI, or own Ticket execution. It decorates those core-managed role Sessions with:
 
-Current `dsh-superagent` deliberately owns one Executor Session per Ticket. Its public plugin service does not expose an Executor extension point, and its report attribution, input tracking, cancellation, retry, and workspace lifecycle all assume one Session maps to one Ticket. `lt-team` therefore does not monkey-patch or replace that lifecycle. It supplies durable role judgement as a safe first step; making permanent roles first-class Ticket executors requires a separate core Executor-provider interface.
+- role persona and responsibility reminders;
+- `memory-short` and `memory-long` runtime Skills;
+- a `memory-manager` Skill for promotion, correction and deletion;
+- a `skill-gardener` review queue instead of automatic executable self-modification;
+- sourced, timestamped and confidence-labelled file-backed memory with no database;
+- repository tool restrictions derived from configured absolute roots.
 
 ## Install
 
-Install this directory as a bundle in the `superagent` profile using the Harness Plugin Manager. The bundle inserts the `@local/lt-team` Host plugin. It creates no UI and requires no frontend build.
+Install this directory as a bundle in the same profile as the compatible `dsh-superagent` core. The bundle inserts the `@local/lt-team` Host plugin and creates no page or client UI.
 
-The default state directory is `$DSH_HOME/state/superagent`. Override it when `dsh-superagent` uses another state directory.
+The default memory state directory is `$DSH_HOME/state/superagent`. Override it when the core uses another state directory:
 
 ```yaml
 - id: lt-team
@@ -26,9 +31,9 @@ The default state directory is `$DSH_HOME/state/superagent`. Override it when `d
     stateDir: /absolute/path/to/superagent-state
 ```
 
-## Configure repository visibility later
+## Repository paths
 
-The initial roles know the business repository names `rank` and `api`, but no filesystem path is assumed. Add absolute read roots after those paths are available:
+The default rank/api programmer roles are enabled, but their paths intentionally stay empty:
 
 ```yaml
 - id: lt-team
@@ -39,16 +44,16 @@ The initial roles know the business repository names `rank` and `api`, but no fi
         kind: product-manager
         name: 产品经理
         responsibility: 负责 rank、api 的需求、范围、优先级和验收标准。
-        readRoots:
-          - /path/to/rank
-          - /path/to/api
+        repository: ''
+        writeRoot: ''
+        readRoots: []
       - id: qa
         kind: qa
         name: QA
         responsibility: 负责 rank、api 的测试策略、回归和发布风险。
-        readRoots:
-          - /path/to/rank
-          - /path/to/api
+        repository: ''
+        writeRoot: ''
+        readRoots: []
       - id: rank-programmer
         kind: programmer
         name: rank 程序员
@@ -65,39 +70,27 @@ The initial roles know the business repository names `rank` and `api`, but no fi
         readRoots: []
 ```
 
-PM and QA are read-only: their tool allowlist excludes shell and file-write tools, and file reads are guarded by `readRoots`. Their private Session workspace remains writable only for Harness internals.
+With no paths, repository file and shell tools are removed from these role Sessions. They can use the active Ticket context, core reporting/reply tools, web research and memory, but cannot claim to inspect, modify, build or commit rank/api code.
 
-The rank and api programmer roles are enabled now, but both `writeRoot` values intentionally stay empty. They can accumulate engineering context and advise from material supplied by the current Ticket worker, but they cannot inspect, modify, build, or commit either repository. Enabling actual repository work remains a later step: “write exactly one repository, read a broader set” must be enforced by a real sandbox/mount/ACL boundary, not only by a prompt or command parser.
-
-## Worker use
-
-Every live and future `worker-<ticket>` Session receives an `lt-team` skill. It can list roles and make a serialized request:
-
-```sh
-lt-team roles
-lt-team ask qa --request-id "$DSH_SUPERAGENT_TICKET:regression" <<'EOF'
-Review the proposed acceptance and identify the smallest meaningful regression plan.
-EOF
-```
-
-The CLI talks over a mode-`0600` Unix-domain socket beneath the plugin state directory. Stable request IDs return the already recorded answer after transport retries instead of starting duplicate work.
+Read-only access can later be added with absolute `readRoots`. Relative paths are refused because the core role Session has a stable workspace separate from each Ticket directory. `writeRoot` remains reserved and must stay empty until a real one-repository writable sandbox/mount/ACL boundary is implemented and tested.
 
 ## Memory model
 
-There is no memory database. Each permanent role uses:
+Each role combines:
 
-1. Its accumulating and compacting Session context as working memory.
-2. A `memory-short` runtime Skill backed by TTL entries.
-3. A `memory-long` runtime Skill for stable, sourced knowledge.
-4. A `memory-manager` Skill that controls promotion, correction, and deletion.
-5. A `skill-gardener` Skill that records reusable-method candidates for review instead of rewriting executable skills automatically.
+1. Its accumulating and compacting Session history.
+2. TTL short memory.
+3. Stable long memory.
+4. Memory promotion/deletion rules.
+5. Reviewed skill candidates.
 
-The mutable entries live in a mode-`0600` JSON file inside that role's plugin state directory. The plugin re-registers the runtime Skills after every memory change, so the next `skill` read sees the current content. Entries keep source, time, confidence, and (for short memory) expiry.
+Mutable entries live in a mode-`0600` JSON file under that role's plugin state directory. The plugin re-registers runtime Skills after each memory change. Stored text is escaped and quoted as recalled data, so it cannot break Skill framing or become higher-priority instructions.
 
 ## Development
 
 ```sh
 npm run check
+npm pack --dry-run
 ```
 
-The tests cover role/config validation, path boundaries, memory TTL and promotion, and the private RPC transport.
+Tests cover fixed role targeting, zero-path tool restrictions, absolute read boundaries, memory TTL/promotion, adversarial memory framing and package contents.

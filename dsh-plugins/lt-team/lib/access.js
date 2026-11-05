@@ -26,8 +26,8 @@ export function isWithin(path, root) {
 }
 
 export function canRead(role, path) {
-  const target = isAbsolute(path) ? path : resolve(role.workspace, path)
-  return [role.workspace, ...role.readRoots].some(root => isWithin(target, root))
+  if (!isAbsolute(path)) return false
+  return role.readRoots.some(root => isWithin(path, root))
 }
 
 export function accessGuard(role) {

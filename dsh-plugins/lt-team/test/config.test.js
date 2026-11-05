@@ -6,10 +6,10 @@ test('defaults to persistent product-manager, QA, rank, and api roles', () => {
   const config = normalizeConfig({}, { DSH_HOME: '/tmp/dsh-home' })
   assert.equal(config.stateDir, '/tmp/dsh-home/state/superagent')
   assert.deepEqual(config.roles.map(role => [role.id, role.sessionId]), [
-    ['product-manager', 'lt-team-product-manager'],
-    ['qa', 'lt-team-qa'],
-    ['rank-programmer', 'lt-team-rank-programmer'],
-    ['api-programmer', 'lt-team-api-programmer'],
+    ['product-manager', 'worker-product-manager'],
+    ['qa', 'worker-qa'],
+    ['rank-programmer', 'worker-rank-programmer'],
+    ['api-programmer', 'worker-api-programmer'],
   ])
   assert.ok(config.roles.every(role => role.readRoots.length === 0))
   assert.deepEqual(config.roles.filter(role => role.kind === 'programmer').map(role => [role.repository, role.writeRoot]), [

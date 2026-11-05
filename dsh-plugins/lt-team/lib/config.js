@@ -78,9 +78,8 @@ function normalizeRole(input, stateDir) {
     writeRoot,
     readRoots: roots,
     roleDir,
-    workspace: join(roleDir, 'workspace'),
     memoryFile: join(roleDir, 'memory.json'),
-    sessionId: `lt-team-${id}`,
+    sessionId: `worker-${id}`,
   }
 }
 
@@ -98,12 +97,7 @@ export function normalizeConfig(input = {}, env = process.env) {
   return {
     stateDir,
     roles,
-    agentPreset: String(input.agentPreset || 'dsh-superagent-worker'),
     shortMemoryDays: Number.isInteger(input.shortMemoryDays) && input.shortMemoryDays > 0 ? input.shortMemoryDays : 14,
     maxMemoryEntries: Number.isInteger(input.maxMemoryEntries) && input.maxMemoryEntries >= 10 ? input.maxMemoryEntries : 200,
-    maxRequestChars: Number.isInteger(input.maxRequestChars) && input.maxRequestChars >= 1000 ? input.maxRequestChars : 100_000,
-    socketPath: join(stateDir, 'lt-team', 'rpc.sock'),
-    binDir: join(stateDir, 'lt-team', 'bin'),
-    cliPath: join(stateDir, 'lt-team', 'bin', 'lt-team'),
   }
 }

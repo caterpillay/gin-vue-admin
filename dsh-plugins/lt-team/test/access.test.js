@@ -2,13 +2,13 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { accessGuard, canRead, isWithin } from '../lib/access.js'
 
-const role = { id: 'qa', workspace: '/state/roles/qa/workspace', readRoots: ['/repos/rank', '/repos/api'] }
+const role = { id: 'qa', readRoots: ['/repos/rank', '/repos/api'] }
 
-test('read scopes include only role workspace and configured repositories', () => {
+test('read scopes include only absolute configured repositories', () => {
   assert.equal(isWithin('/repos/rank/src/file.go', '/repos/rank'), true)
   assert.equal(isWithin('/repos/ranking/file.go', '/repos/rank'), false)
   assert.equal(canRead(role, '/repos/api/tests/api_test.go'), true)
-  assert.equal(canRead(role, 'notes/context.md'), true)
+  assert.equal(canRead(role, 'notes/context.md'), false)
   assert.equal(canRead(role, '/repos/other/secret.txt'), false)
 })
 
