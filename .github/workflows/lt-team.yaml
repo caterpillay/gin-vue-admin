@@ -1,0 +1,29 @@
+name: lt-team plugin
+
+on:
+  push:
+    paths:
+      - 'dsh-plugins/lt-team/**'
+      - '.github/workflows/lt-team.yaml'
+  pull_request:
+    paths:
+      - 'dsh-plugins/lt-team/**'
+      - '.github/workflows/lt-team.yaml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.19.0'
+      - name: Install Harness peer dependencies
+        working-directory: dsh-plugins/lt-team
+        run: npm install --ignore-scripts --no-package-lock
+      - name: Check plugin
+        working-directory: dsh-plugins/lt-team
+        run: npm run check
+      - name: Verify package contents
+        working-directory: dsh-plugins/lt-team
+        run: npm pack --dry-run
