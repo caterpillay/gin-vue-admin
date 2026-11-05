@@ -24,7 +24,8 @@ export const inject = ['agents', 'tools', 'systemPrompt', 'skills']
 
 export async function apply(ctx, rawConfig) {
   const decorator = new RoleDecorator(ctx, normalizeConfig(rawConfig))
-  await decorator.start()
+  try { await decorator.start() }
+  catch (error) { decorator.dispose(); throw error }
   ctx.effect(() => () => decorator.dispose())
 }
 
