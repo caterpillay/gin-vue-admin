@@ -14,9 +14,9 @@ test('defaults to the exact persistent core role catalog', () => {
     ['api-programmer', 'worker-api-programmer'],
   ])
   assert.ok(config.roles.every(role => role.readRoots.length === 0))
-  assert.deepEqual(config.roles.filter(role => role.kind === 'programmer').map(role => [role.repository, role.writeRoot]), [
-    ['rank', ''],
-    ['api', ''],
+  assert.deepEqual(config.roles.filter(role => role.kind === 'programmer').map(role => [role.repository, role.repositoryProvider, role.writeRoot]), [
+    ['rank', 'codebase', ''],
+    ['api', 'codebase', ''],
   ])
 })
 
@@ -38,9 +38,17 @@ test('requires every fixed core role exactly once and preserves its kind and rep
   assert.throws(() => normalizeConfig({ stateDir: '/tmp/state', roles: fixed.map(role => role.id === 'rank-programmer' ? { ...role, repository: 'other' } : role) }), /fixed core role/)
 })
 
-test('programmer roles require repository labels and keep write paths empty', () => {
+test('programmer roles require repository labels and an allowed provider while write paths stay empty', () => {
   const fixed = roles()
-  assert.equal(normalizeConfig({ stateDir: '/tmp/state', roles: fixed }).roles[2].repository, 'rank')
+  const normalized = normalizeConfig({ stateDir: '/tmp/state', roles: fixed })
+  assert.equal(normalized.roles[2].repository, 'rank')
+  assert.equal(normalized.roles[2].repositoryProvider, 'codebase')
+  const github = normalizeConfig({ stateDir: '/tmp/state', roles: fixed.map(role => role.id === 'rank-programmer' ? { ...role, repositoryProvider: 'github' } : role) })
+  assert.equal(github.roles[2].repositoryProvider, 'github')
   assert.throws(() => normalizeConfig({ stateDir: '/tmp/state', roles: fixed.map(role => role.id === 'rank-programmer' ? { ...role, repository: '' } : role) }), /must name its repository/)
+  const migrated = normalizeConfig({ stateDir: '/tmp/state', roles: fixed.map(role => role.id === 'rank-programmer' ? { ...role, repositoryProvider: '' } : role) })
+  assert.equal(migrated.roles[2].repositoryProvider, 'codebase')
+  assert.throws(() => normalizeConfig({ stateDir: '/tmp/state', roles: fixed.map(role => role.id === 'rank-programmer' ? { ...role, repositoryProvider: 'gitlab' } : role) }), /must be codebase or github/)
+  assert.throws(() => normalizeConfig({ stateDir: '/tmp/state', roles: fixed.map(role => role.id === 'qa' ? { ...role, repositoryProvider: 'codebase' } : role) }), /must be empty/)
   assert.throws(() => normalizeConfig({ stateDir: '/tmp/state', roles: fixed.map(role => role.id === 'rank-programmer' ? { ...role, writeRoot: '/repo/rank' } : role) }), /must stay empty/)
 })

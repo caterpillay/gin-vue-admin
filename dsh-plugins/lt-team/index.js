@@ -8,6 +8,7 @@ const RoleConfig = s.object({
   name: s.string().description('Display name.'),
   responsibility: s.string().description('The business responsibility this permanent role owns.'),
   repository: s.string().default('').description('Repository label owned by a programmer role, such as rank or api.'),
+  repositoryProvider: s.string().default('').description('Repository provider: codebase or github for programmer roles; empty for other roles.'),
   writeRoot: s.string().default('').description('Reserved writable repository path; keep empty until write isolation is enabled.'),
   readRoots: s.array(s.string()).default([]).description('Absolute read-only repository roots. Relative paths are refused.'),
 })

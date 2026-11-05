@@ -31,9 +31,9 @@ The default memory state directory is `$DSH_HOME/state/superagent`. Override it 
     stateDir: /absolute/path/to/superagent-state
 ```
 
-## Repository paths
+## Repository providers and paths
 
-The default rank/api programmer roles are enabled, but their paths intentionally stay empty:
+The default rank/api programmer roles are assigned to ByteDance Codebase. GitHub remains supported as a per-role provider, but paths intentionally stay empty until the corresponding repository is configured:
 
 ```yaml
 - id: lt-team
@@ -45,6 +45,7 @@ The default rank/api programmer roles are enabled, but their paths intentionally
         name: 产品经理
         responsibility: 负责 rank、api 的需求、范围、优先级和验收标准。
         repository: ''
+        repositoryProvider: ''
         writeRoot: ''
         readRoots: []
       - id: qa
@@ -52,6 +53,7 @@ The default rank/api programmer roles are enabled, but their paths intentionally
         name: QA
         responsibility: 负责 rank、api 的测试策略、回归和发布风险。
         repository: ''
+        repositoryProvider: ''
         writeRoot: ''
         readRoots: []
       - id: rank-programmer
@@ -59,6 +61,7 @@ The default rank/api programmer roles are enabled, but their paths intentionally
         name: rank 程序员
         responsibility: 负责 rank 的实现方案和技术问题。
         repository: rank
+        repositoryProvider: codebase
         writeRoot: ''
         readRoots: []
       - id: api-programmer
@@ -66,11 +69,14 @@ The default rank/api programmer roles are enabled, but their paths intentionally
         name: api 程序员
         responsibility: 负责 api 的实现方案和技术问题。
         repository: api
+        repositoryProvider: codebase
         writeRoot: ''
         readRoots: []
 ```
 
-With no paths, repository file and shell tools are removed from these role Sessions. They can use the active Ticket context, core reporting/reply tools, web research and memory, but cannot claim to inspect, modify, build or commit rank/api code.
+`repositoryProvider` accepts `codebase` or `github` for programmer roles. The default selects Codebase for the internal rank/api repositories without removing GitHub support for roles that still need it. Product-manager and QA roles must leave it empty because they do not own one repository.
+
+Provider selection is routing metadata, not credentials or repository access. With no paths, repository file and shell tools are removed from these role Sessions. They can use the active Ticket context, core reporting/reply tools, web research and memory, but cannot claim to inspect, modify, build, commit, push, or open an MR/PR for rank/api code. Configuring Codebase authentication, repository identities and MR lifecycle belongs to the core repository adapter; this companion does not pretend that metadata alone enables those operations.
 
 Read-only access can later be added with absolute `readRoots`. Relative paths are refused because the core role Session has a stable workspace separate from each Ticket directory. `writeRoot` remains reserved and must stay empty until a real one-repository writable sandbox/mount/ACL boundary is implemented and tested.
 
