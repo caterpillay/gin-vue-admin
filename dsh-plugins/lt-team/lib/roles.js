@@ -2,11 +2,6 @@ import { readFile } from 'node:fs/promises'
 import { accessGuard } from './access.js'
 import { MemoryStore, renderMemorySkills } from './memory.js'
 
-const CORE_TOOLS = [
-  'orchestrator_read', 'orchestrator_ack', 'orchestrator_report', 'orchestrator_thread_unrelated',
-  'orchestrator_thread_follow', 'orchestrator_trigger_handback',
-]
-const MEMORY_TOOLS = ['lt_team_memory_list', 'lt_team_memory_add', 'lt_team_memory_promote', 'lt_team_memory_forget']
 const RESEARCH_TOOLS = ['web_search', 'web_fetch', 'skill', 'todo_write']
 const READ_TOOLS = ['read', 'read_image', 'glob', 'grep']
 
@@ -85,7 +80,7 @@ export class RoleDecorator {
         execute: async ({ kind, id }) => { const value = await memory.forget(kind, id); await refresh(); return value },
       }),
     )
-    const allow = [...CORE_TOOLS, ...MEMORY_TOOLS, ...RESEARCH_TOOLS, ...(role.readRoots.length ? READ_TOOLS : [])]
+    const allow = [...RESEARCH_TOOLS, ...(role.readRoots.length ? READ_TOOLS : [])]
       .filter(name => agent.ctx.tools.get(name))
     binding.disposers.push(agent.ctx.tools.restrict({ allow }))
     if (role.readRoots.length) binding.disposers.push(agent.ctx.tools.guard(accessGuard(role)))

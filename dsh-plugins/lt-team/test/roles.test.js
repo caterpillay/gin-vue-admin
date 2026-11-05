@@ -13,14 +13,20 @@ function fakeAgent(id) {
     ['read', {}], ['read_image', {}], ['glob', {}], ['grep', {}], ['bash', {}],
     ['web_search', {}], ['web_fetch', {}], ['skill', {}], ['todo_write', {}],
   ])
+  const local = new Set(['orchestrator_read', 'orchestrator_ack', 'orchestrator_report',
+    'orchestrator_thread_unrelated', 'orchestrator_thread_follow', 'orchestrator_trigger_handback'])
   const skills = new Map(), sections = [], restrictions = []
   const agent = {
     id,
     ctx: {
       systemPrompt: { section(spec) { sections.push(spec); return () => {} } },
       tools: {
-        register(spec) { tools.set(spec.name, spec); return () => tools.delete(spec.name) },
-        restrict(spec) { restrictions.push(spec.allow); return () => {} },
+        register(spec) { tools.set(spec.name, spec); local.add(spec.name); return () => { tools.delete(spec.name); local.delete(spec.name) } },
+        restrict(spec) {
+          const invalid = spec.allow.filter(name => local.has(name))
+          if (invalid.length) throw new Error(`unknown inherited tools: ${invalid.join(', ')}`)
+          restrictions.push(spec.allow); return () => {}
+        },
         guard: () => () => {},
         get: name => tools.get(name),
       },
@@ -58,8 +64,10 @@ test('decorates only core-managed fixed role Sessions with memory and zero-path 
     assert.ok(agent.test.skills.has(`lt-team-${role}-memory-manager`))
     assert.ok(agent.test.tools.has('lt_team_memory_add'))
     const allowed = agent.test.restrictions.at(-1)
-    assert.ok(allowed.includes('orchestrator_report'))
-    assert.ok(allowed.includes('lt_team_memory_add'))
+    assert.ok(agent.test.tools.has('orchestrator_report'))
+    assert.ok(agent.test.tools.has('lt_team_memory_add'))
+    assert.equal(allowed.includes('orchestrator_report'), false)
+    assert.equal(allowed.includes('lt_team_memory_add'), false)
     assert.equal(allowed.includes('read'), false)
     assert.equal(allowed.includes('bash'), false)
   }

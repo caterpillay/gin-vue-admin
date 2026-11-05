@@ -40,6 +40,7 @@ export const DEFAULT_ROLES = Object.freeze([
 
 const ROLE_ID = /^[a-z][a-z0-9-]{1,31}$/
 const ROLE_KINDS = new Set(['product-manager', 'qa', 'programmer'])
+const CORE_ROLES = new Map(DEFAULT_ROLES.map(role => [role.id, { kind: role.kind, repository: String(role.repository ?? '') }]))
 
 export function defaultStateDir(env = process.env) {
   const home = env.DSH_HOME?.trim() || join(homedir(), '.dsh')
@@ -91,8 +92,15 @@ export function normalizeConfig(input = {}, env = process.env) {
     if (ids.has(role.id)) throw new Error(`lt-team role id ${role.id} is duplicated`)
     ids.add(role.id)
   }
-  if (!roles.some(role => role.kind === 'product-manager') || !roles.some(role => role.kind === 'qa')) {
-    throw new Error('lt-team requires at least one product-manager role and one qa role')
+  const expectedIds = [...CORE_ROLES.keys()]
+  if (roles.length !== expectedIds.length || expectedIds.some(id => !ids.has(id))) {
+    throw new Error(`lt-team roles must contain exactly: ${expectedIds.join(', ')}`)
+  }
+  for (const role of roles) {
+    const expected = CORE_ROLES.get(role.id)
+    if (!expected || role.kind !== expected.kind || role.repository !== expected.repository) {
+      throw new Error(`lt-team role ${role.id} must match the fixed core role kind and repository`)
+    }
   }
   return {
     stateDir,
